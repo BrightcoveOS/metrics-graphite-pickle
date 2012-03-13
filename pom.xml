@@ -6,7 +6,7 @@
     <name>Metrics Graphite Support using Pickle</name>
     <version>1.0.0-SNAPSHOT</version>
     <properties>
-        <metrics.version>2.0.2-SNAPSHOT</metrics.version>
+        <metrics.version>2.1.0</metrics.version>
         <slf4j.version>1.6.4</slf4j.version>
     </properties>
     <dependencies>
