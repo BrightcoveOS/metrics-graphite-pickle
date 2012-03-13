@@ -3,12 +3,50 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.brightcove.metrics</groupId>
     <artifactId>metrics-graphite-pickle</artifactId>
+    <packaging>jar</packaging>
     <name>Metrics Graphite Support using Pickle</name>
     <version>1.0.0-SNAPSHOT</version>
+    <description>An extension to metrics-graphite that enables pickle publishing.</description>
+    <url>https://github.com/BrightcoveOS/metrics-graphite-pickle</url>
+
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
+    <licenses>
+        <license>
+            <name>The MIT License</name>
+            <url>http://www.opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:BrightcoveOS/metrics-graphite-pickle.git</connection>
+        <developerConnection>scm:git:git@github.com:BrightcoveOS/metrics-graphite-pickle.git</developerConnection>
+        <url>https://github.com/BrightcoveOS/metrics-graphite-pickle/</url>
+    </scm>
+
+    <issueManagement>
+        <system>github</system>
+        <url>https://github.com/BrightcoveOS/metrics-graphite-pickle/issues/</url>
+    </issueManagement>
+
+    <developers>
+        <developer>
+            <name>Sam Perman</name>
+            <email>sam@brightcove.com</email>
+            <timezone>-5</timezone>
+        </developer>
+    </developers>
+ 
     <properties>
         <metrics.version>2.1.0</metrics.version>
         <slf4j.version>1.6.4</slf4j.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.yammer.metrics</groupId>
@@ -65,4 +103,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
 </project>
