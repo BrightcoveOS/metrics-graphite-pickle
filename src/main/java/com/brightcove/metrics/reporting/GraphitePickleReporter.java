@@ -45,6 +45,36 @@ public class GraphitePickleReporter extends GraphiteReporter {
     private int batchSize = DEFAULT_BATCH_SIZE; // how many metrics per pickle payload?
 
     
+    public static void enable(long period, TimeUnit unit, String host, int port) {
+        enable(Metrics.defaultRegistry(), period, unit, host, port);
+    }
+
+    public static void enable(MetricsRegistry metricsRegistry, long period, TimeUnit unit, String host, int port) {
+        enable(metricsRegistry, period, unit, host, port, null);
+    }
+
+    public static void enable(long period, TimeUnit unit, String host, int port, String prefix) {
+        enable(Metrics.defaultRegistry(), period, unit, host, port, prefix);
+    }
+
+    public static void enable(long period, TimeUnit unit, String host, int port, String prefix, int batchSize) {
+        enable(Metrics.defaultRegistry(), period, unit, host, port, prefix, batchSize);
+    }
+
+    public static void enable(MetricsRegistry metricsRegistry, long period, TimeUnit unit, String host, int port, String prefix) {
+        enable(metricsRegistry, period, unit, host, port, prefix, MetricPredicate.ALL, DEFAULT_BATCH_SIZE);
+    }
+
+    public static void enable(MetricsRegistry metricsRegistry, long period, TimeUnit unit, String host, int port, String prefix, 
+            int batchSize) {
+        enable(metricsRegistry, period, unit, host, port, prefix, MetricPredicate.ALL, DEFAULT_BATCH_SIZE);
+    }
+
+    public static void enable(MetricsRegistry metricsRegistry, long period, TimeUnit unit, String host, int port, String prefix, 
+            MetricPredicate predicate) {
+        enable(metricsRegistry, period, unit, host, port, prefix, predicate, DEFAULT_BATCH_SIZE);
+    }
+
     /**
      * Enables the graphite pickle reporter to send data to graphite server with the specified period.
      *
@@ -56,14 +86,16 @@ public class GraphitePickleReporter extends GraphiteReporter {
      * @param prefix          the string which is prepended to all metric names
      * @param predicate       filters metrics to be reported
      */
-    public static void enable(MetricsRegistry metricsRegistry, long period, TimeUnit unit, String host, int port, String prefix, MetricPredicate predicate, int batchSize) {
+    public static void enable(MetricsRegistry metricsRegistry, long period, TimeUnit unit, String host, int port, String prefix, 
+            MetricPredicate predicate, int batchSize) {
         try {
             final GraphitePickleReporter reporter = new GraphitePickleReporter(metricsRegistry,
                                                                    prefix,
                                                                    predicate,
                                                                    new DefaultSocketProvider(host,
                                                                                              port),
-                                                                   Clock.defaultClock());
+                                                                   Clock.defaultClock(),
+                                                                   batchSize);
             reporter.start(period, unit);
         } catch (Exception e) {
             LOG.error("Error creating/starting Graphite reporter:", e);
@@ -188,6 +220,7 @@ public class GraphitePickleReporter extends GraphiteReporter {
         pickler.addMetric(timestamp, name, valueName, String.format(locale, "%s", value));
     }
 
+    @SuppressWarnings("restriction")
     private class MetricPickler {
         
         /**
@@ -213,6 +246,8 @@ public class GraphitePickleReporter extends GraphiteReporter {
             this.prefix = prefix;
             this.socket = socket;
             this.batchSize = batchSize;
+            
+            LOG.debug("Created metric pickler with prefix {} and batchSize {}", prefix, batchSize);
             
             ScriptEngine engine = new ScriptEngineManager().getEngineByName("python");            
             Compilable compilable = (Compilable) engine;
@@ -272,6 +307,8 @@ public class GraphitePickleReporter extends GraphiteReporter {
                 
                 // if there was an error, we might miss some data. for now, drop those on the floor and
                 // try to keep going.
+                LOG.debug("Wrote {} metrics", metrics.size());
+                
                 metrics.clear();
             }
         }
