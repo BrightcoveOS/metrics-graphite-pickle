@@ -43,7 +43,7 @@
     </developers>
  
     <properties>
-        <metrics.version>2.1.0</metrics.version>
+        <metrics.version>2.1.1</metrics.version>
         <slf4j.version>1.6.4</slf4j.version>
     </properties>
 
@@ -136,19 +136,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
