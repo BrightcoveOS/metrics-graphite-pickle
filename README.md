@@ -9,3 +9,15 @@ This is recommended if sending large amounts of data:
 ``` java
 GraphitePickleReporter.enable(1, TimeUnit.MINUTES, "graphite.example.com", 2004);
 ```
+
+### Setting up Maven
+
+To add `metrics-graphite-pickle` to your project:
+
+```
+<dependency>
+  <groupId>com.brightcove.metrics</groupId>
+  <artifactId>metrics-graphite-pickle</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
