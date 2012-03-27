@@ -67,7 +67,7 @@ public class GraphitePickleReporter extends GraphiteReporter {
 
     public static void enable(MetricsRegistry metricsRegistry, long period, TimeUnit unit, String host, int port, String prefix, 
             int batchSize) {
-        enable(metricsRegistry, period, unit, host, port, prefix, MetricPredicate.ALL, DEFAULT_BATCH_SIZE);
+        enable(metricsRegistry, period, unit, host, port, prefix, MetricPredicate.ALL, batchSize);
     }
 
     public static void enable(MetricsRegistry metricsRegistry, long period, TimeUnit unit, String host, int port, String prefix, 
@@ -182,8 +182,7 @@ public class GraphitePickleReporter extends GraphiteReporter {
     @Override
     public void run() {
         try {
-            Socket socket = this.socketProvider.get();
-            pickler = new MetricPickler(prefix, socket, this.batchSize);
+            pickler = new MetricPickler(prefix, this.socketProvider, this.batchSize);
 
             final long epoch = clock.time() / 1000;
             if (this.printVMMetrics) {
@@ -198,7 +197,8 @@ public class GraphitePickleReporter extends GraphiteReporter {
             }
         } finally {
             if(pickler != null) {
-                pickler.close();
+                // finish writing any left over metrics
+                pickler.writeMetrics();
             }
             
         }
@@ -234,17 +234,17 @@ public class GraphitePickleReporter extends GraphiteReporter {
         		"message = header + payload\n";
         
         private String prefix;
+        private SocketProvider socketProvider;
         private int batchSize;
-        private Socket socket;
-        private Writer writer;
         // graphite expects a pickled list of python tuples
         PyList metrics = new PyList();
 
         private CompiledScript pickleScript;
+
         
-        MetricPickler(String prefix, Socket socket, int batchSize) throws IOException, ScriptException {
+        MetricPickler(String prefix, SocketProvider socketProvider, int batchSize) throws IOException, ScriptException {
             this.prefix = prefix;
-            this.socket = socket;
+            this.socketProvider = socketProvider;
             this.batchSize = batchSize;
             
             LOG.debug("Created metric pickler with prefix {} and batchSize {}", prefix, batchSize);
@@ -253,7 +253,6 @@ public class GraphitePickleReporter extends GraphiteReporter {
             Compilable compilable = (Compilable) engine;
             pickleScript = compilable.compile(PICKLER_SCRIPT);
 
-            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
         }
         
         /**
@@ -295,8 +294,21 @@ public class GraphitePickleReporter extends GraphiteReporter {
                     Object result = bindings.get("message");
                     String message = result.toString();
 
-                    writer.write(message);
-                    writer.flush();
+                    Socket socket = null;
+                    Writer pickleWriter = null;
+                    try {
+                        socket = socketProvider.get();
+                        pickleWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+                        pickleWriter.write(message);
+                        pickleWriter.flush();
+                    } finally {
+                        if (pickleWriter != null) {
+                            pickleWriter.close();
+                        }
+                        if (socket != null) {
+                            socket.close();
+                        }
+                    }
                 } catch (Exception e) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Error writing to Graphite", e);
@@ -311,34 +323,6 @@ public class GraphitePickleReporter extends GraphiteReporter {
                 
                 metrics.clear();
             }
-        }
-        
-        /**
-         * This closes the writer and the socket. Before doing that it attempst to write any pending 
-         * datapoints.
-         */
-        private void close() {
-            writeMetrics();
-            if(writer != null) {
-                try {
-                    writer.flush();
-                    writer.close();
-                } catch (IOException e) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Error writing to Graphite", e);
-                    } else {
-                        LOG.warn("Error writing to Graphite: {}", e.getMessage());
-                    }
-                }
-            }
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    LOG.error("Error while closing socket:", e);
-                }
-            }
-            writer = null;
-        }
+        }        
     }
 }
