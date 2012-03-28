@@ -298,14 +298,12 @@ public class GraphitePickleReporter extends GraphiteReporter {
                     Writer pickleWriter = null;
                     try {
                         socket = socketProvider.get();
-                        pickleWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+                        pickleWriter = new OutputStreamWriter(socket.getOutputStream(), "ISO-8859-1");
                         pickleWriter.write(message);
                         pickleWriter.flush();
                     } finally {
-                        if (pickleWriter != null) {
-                            pickleWriter.close();
-                        }
                         if (socket != null) {
+                            socket.shutdownOutput();
                             socket.close();
                         }
                     }
