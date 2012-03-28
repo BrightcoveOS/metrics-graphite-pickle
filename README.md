@@ -18,6 +18,16 @@ To add `metrics-graphite-pickle` to your project:
 <dependency>
   <groupId>com.brightcove.metrics</groupId>
   <artifactId>metrics-graphite-pickle</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
+
+Change Log
+----------
+
+### 1.0.1
+* Fixed a bug where a `batchSize` passed to `enable` was ignored.
+* Recreates the socket on each batch to prevent reaching the 100K byte limit (and a broken pipe) 
+
+### 1.0.0
+Initial release.
