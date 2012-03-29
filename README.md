@@ -18,7 +18,7 @@ To add `metrics-graphite-pickle` to your project:
 <dependency>
   <groupId>com.brightcove.metrics</groupId>
   <artifactId>metrics-graphite-pickle</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.2</version>
 </dependency>
 ```
 
