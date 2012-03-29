@@ -39,6 +39,7 @@ import com.yammer.metrics.reporting.SocketProvider;
 public class GraphitePickleReporter extends GraphiteReporter {
     private static final Logger LOG = LoggerFactory.getLogger(GraphitePickleReporter.class);
     final static int DEFAULT_BATCH_SIZE = 100;
+    public static final String CHARSET_NAME = "ISO-8859-1";
 
     private final Locale locale = Locale.US;
     private MetricPickler pickler;
@@ -298,7 +299,7 @@ public class GraphitePickleReporter extends GraphiteReporter {
                     Writer pickleWriter = null;
                     try {
                         socket = socketProvider.get();
-                        pickleWriter = new OutputStreamWriter(socket.getOutputStream(), "ISO-8859-1");
+                        pickleWriter = new OutputStreamWriter(socket.getOutputStream(), CHARSET_NAME);
                         pickleWriter.write(message);
                         pickleWriter.flush();
                     } finally {

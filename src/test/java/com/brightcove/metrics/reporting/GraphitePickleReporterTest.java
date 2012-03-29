@@ -139,7 +139,7 @@ public class GraphitePickleReporterTest extends AbstractPollingReporterTest {
             out.flush();
             // the charset is important. if the GraphitePickleReporter and this test
             // don't agree, the header is not always correctly unpacked.
-            String payload = out.toString("ISO-8859-1");
+            String payload = out.toString(GraphitePickleReporter.CHARSET_NAME);
             
             PyList result = new PyList();
 

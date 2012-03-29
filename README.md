@@ -25,6 +25,9 @@ To add `metrics-graphite-pickle` to your project:
 Change Log
 ----------
 
+### 1.0.2
+* Changed encoding to ISO-8859-1 to match the python default
+
 ### 1.0.1
 * Fixed a bug where a `batchSize` passed to `enable` was ignored.
 * Recreates the socket on each batch to prevent reaching the 100K byte limit (and a broken pipe) 
