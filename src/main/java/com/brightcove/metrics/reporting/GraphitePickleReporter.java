@@ -1,12 +1,18 @@
 package com.brightcove.metrics.reporting;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.net.Socket;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Clock;
+import com.yammer.metrics.core.MetricPredicate;
+import com.yammer.metrics.core.MetricsRegistry;
+import com.yammer.metrics.core.VirtualMachineMetrics;
+import com.yammer.metrics.reporting.GraphiteReporter;
+import com.yammer.metrics.reporting.SocketProvider;
+import org.python.core.PyList;
+import org.python.core.PyLong;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -15,21 +21,12 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
-
-import org.python.core.PyList;
-import org.python.core.PyLong;
-import org.python.core.PyString;
-import org.python.core.PyTuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Clock;
-import com.yammer.metrics.core.MetricPredicate;
-import com.yammer.metrics.core.MetricsRegistry;
-import com.yammer.metrics.core.VirtualMachineMetrics;
-import com.yammer.metrics.reporting.GraphiteReporter;
-import com.yammer.metrics.reporting.SocketProvider;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.Socket;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -178,18 +175,25 @@ public class GraphitePickleReporter extends GraphiteReporter {
     public GraphitePickleReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, SocketProvider socketProvider, Clock clock, VirtualMachineMetrics virtualMachine, int batchSize) throws IOException {
         super(metricsRegistry, prefix, predicate, socketProvider, clock, virtualMachine, "graphite-pickle-reporter");
         this.batchSize = batchSize;
+        try {
+            // this used to be in the run method, but that resulted in a separate ScriptEngine on each call
+            // each engine has a thread local that never got cleaned up... causing a memory leak
+            this.pickler = new MetricPickler(this.prefix, this.socketProvider, this.batchSize);
+        } catch (Exception e) {
+            LOG.warn("Error creating reporter", e);
+        }
     }
 
     @Override
     public void run() {
         try {
-            pickler = new MetricPickler(prefix, this.socketProvider, this.batchSize);
-
-            final long epoch = clock.time() / 1000;
-            if (this.printVMMetrics) {
-                printVmMetrics(epoch);
+            if (pickler != null) {
+                final long epoch = clock.time() / 1000;
+                if (this.printVMMetrics) {
+                    printVmMetrics(epoch);
+                }
+                printRegularMetrics(epoch);
             }
-            printRegularMetrics(epoch);
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Error writing to Graphite", e);
