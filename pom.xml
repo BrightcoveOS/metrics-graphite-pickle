@@ -43,7 +43,7 @@
     </developers>
  
     <properties>
-        <metrics.version>2.1.1</metrics.version>
+        <metrics.version>2.1.2</metrics.version>
         <slf4j.version>1.6.4</slf4j.version>
     </properties>
 

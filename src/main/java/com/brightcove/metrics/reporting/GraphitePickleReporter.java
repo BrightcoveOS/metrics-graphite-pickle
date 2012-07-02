@@ -175,13 +175,9 @@ public class GraphitePickleReporter extends GraphiteReporter {
     public GraphitePickleReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, SocketProvider socketProvider, Clock clock, VirtualMachineMetrics virtualMachine, int batchSize) throws IOException {
         super(metricsRegistry, prefix, predicate, socketProvider, clock, virtualMachine, "graphite-pickle-reporter");
         this.batchSize = batchSize;
-        try {
-            // this used to be in the run method, but that resulted in a separate ScriptEngine on each call
-            // each engine has a thread local that never got cleaned up... causing a memory leak
-            this.pickler = new MetricPickler(this.prefix, this.socketProvider, this.batchSize);
-        } catch (Exception e) {
-            LOG.warn("Error creating reporter", e);
-        }
+        // this used to be in the run method, but that resulted in a separate ScriptEngine on each call
+        // each engine has a thread local that never got cleaned up... causing a memory leak
+        this.pickler = new MetricPickler(this.prefix, this.socketProvider, this.batchSize);
     }
 
     @Override
@@ -247,7 +243,7 @@ public class GraphitePickleReporter extends GraphiteReporter {
         private CompiledScript pickleScript;
 
         
-        MetricPickler(String prefix, SocketProvider socketProvider, int batchSize) throws IOException, ScriptException {
+        MetricPickler(String prefix, SocketProvider socketProvider, int batchSize) {
             this.prefix = prefix;
             this.socketProvider = socketProvider;
             this.batchSize = batchSize;
@@ -256,7 +252,11 @@ public class GraphitePickleReporter extends GraphiteReporter {
             
             ScriptEngine engine = new ScriptEngineManager().getEngineByName("python");            
             Compilable compilable = (Compilable) engine;
-            pickleScript = compilable.compile(PICKLER_SCRIPT);
+            try {
+                pickleScript = compilable.compile(PICKLER_SCRIPT);
+            } catch (ScriptException e) {
+                throw new RuntimeException("Unable to compile pickle script", e);
+            }
 
         }
         
