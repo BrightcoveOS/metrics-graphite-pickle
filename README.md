@@ -18,12 +18,17 @@ To add `metrics-graphite-pickle` to your project:
 <dependency>
   <groupId>com.brightcove.metrics</groupId>
   <artifactId>metrics-graphite-pickle</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
 </dependency>
 ```
 
 Change Log
 ----------
+
+### 1.0.3
+* Moved the creation of the jython script engine out of the reporter's "run" method. This should fix a memory leak
+  caused by ThreadLocal entries that never got cleaned up.
+* Upgrade to metrics-graphite 2.1.2
 
 ### 1.0.2
 * Changed encoding to ISO-8859-1 to match the python default
