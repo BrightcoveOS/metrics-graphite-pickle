@@ -18,12 +18,16 @@ To add `metrics-graphite-pickle` to your project:
 <dependency>
   <groupId>com.brightcove.metrics</groupId>
   <artifactId>metrics-graphite-pickle</artifactId>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
 </dependency>
 ```
 
 Change Log
 ----------
+
+### 1.0.4
+* Move the creation of MetricsPickler back into the run method but use a synchronized method to ensure it is only created
+  once. This improves startup time by a few seconds in some cases.
 
 ### 1.0.3
 * Moved the creation of the jython script engine out of the reporter's "run" method. This should fix a memory leak
