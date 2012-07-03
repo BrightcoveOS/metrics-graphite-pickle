@@ -5,7 +5,7 @@
     <artifactId>metrics-graphite-pickle</artifactId>
     <packaging>jar</packaging>
     <name>Metrics Graphite Support using Pickle</name>
-    <version>1.0.4</version>
+    <version>1.0.5-SNAPSHOT</version>
     <description>An extension to metrics-graphite that enables pickle publishing.</description>
     <url>http://opensource.brightcove.com/project/metrics-graphite-pickle/</url>
 
