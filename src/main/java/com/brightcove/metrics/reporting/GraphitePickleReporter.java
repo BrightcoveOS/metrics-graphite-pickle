@@ -190,11 +190,13 @@ public class GraphitePickleReporter extends GraphiteReporter {
     @Override
     public void run() {
         try {
-            final long epoch = clock.time() / 1000;
-            if (this.printVMMetrics) {
-                printVmMetrics(epoch);
+            if (getPickler() != null) {
+                final long epoch = clock.time() / 1000;
+                if (this.printVMMetrics) {
+                    printVmMetrics(epoch);
+                }
+                printRegularMetrics(epoch);
             }
-            printRegularMetrics(epoch);
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Error writing to Graphite", e);
