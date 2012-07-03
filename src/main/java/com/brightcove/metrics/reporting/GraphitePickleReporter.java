@@ -175,15 +175,22 @@ public class GraphitePickleReporter extends GraphiteReporter {
     public GraphitePickleReporter(MetricsRegistry metricsRegistry, String prefix, MetricPredicate predicate, SocketProvider socketProvider, Clock clock, VirtualMachineMetrics virtualMachine, int batchSize) throws IOException {
         super(metricsRegistry, prefix, predicate, socketProvider, clock, virtualMachine, "graphite-pickle-reporter");
         this.batchSize = batchSize;
-        // this used to be in the run method, but that resulted in a separate ScriptEngine on each call
-        // each engine has a thread local that never got cleaned up... causing a memory leak
-        this.pickler = new MetricPickler(this.prefix, this.socketProvider, this.batchSize);
+    }
+
+    /**
+     * Create the pickler if it hasn't already been created.
+     */
+    private synchronized MetricPickler getPickler() {
+        if (pickler == null) {
+            pickler = new MetricPickler(prefix, socketProvider, batchSize);
+        }
+        return pickler;
     }
 
     @Override
     public void run() {
         try {
-            if (pickler != null) {
+            if (getPickler() != null) {
                 final long epoch = clock.time() / 1000;
                 if (this.printVMMetrics) {
                     printVmMetrics(epoch);
@@ -197,9 +204,9 @@ public class GraphitePickleReporter extends GraphiteReporter {
                 LOG.warn("Error writing to Graphite: {}", e.getMessage());
             }
         } finally {
-            if(pickler != null) {
+            if(getPickler() != null) {
                 // finish writing any left over metrics
-                pickler.writeMetrics();
+                getPickler().writeMetrics();
             }
             
         }
@@ -207,18 +214,18 @@ public class GraphitePickleReporter extends GraphiteReporter {
 
     @Override
     protected void sendInt(long timestamp, String name, String valueName, long value) {
-        pickler.addMetric(timestamp, name, valueName, String.format(locale, "%d", value));
+        getPickler().addMetric(timestamp, name, valueName, String.format(locale, "%d", value));
     }
 
     
     @Override
     protected void sendFloat(long timestamp, String name, String valueName, double value) {
-        pickler.addMetric(timestamp, name, valueName, String.format(locale, "%2.2f", value));
+        getPickler().addMetric(timestamp, name, valueName, String.format(locale, "%2.2f", value));
     }
 
     @Override
     protected void sendObjToGraphite(long timestamp, String name, String valueName, Object value) {
-        pickler.addMetric(timestamp, name, valueName, String.format(locale, "%s", value));
+        getPickler().addMetric(timestamp, name, valueName, String.format(locale, "%s", value));
     }
 
     @SuppressWarnings("restriction")
