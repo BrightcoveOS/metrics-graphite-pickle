@@ -25,6 +25,10 @@ To add `metrics-graphite-pickle` to your project:
 Change Log
 ----------
 
+### 1.0.5
+* Fixed a bug where a null prefix caused the last word in a metric name to be lost in some cases (e.g. 'mean')
+* Upgrade to metrics-graphite-2.1.3
+
 ### 1.0.4
 * Move the creation of MetricsPickler back into the run method but use a synchronized method to ensure it is only created
   once. This improves startup time by a few seconds in some cases.
