@@ -276,15 +276,13 @@ public class GraphitePickleReporter extends GraphiteReporter {
          * If we reach the batch size, write them out.
          */
         public void addMetric(long timestamp, String name, String valueName, String value) {
-            String metricName = sanitizeString(name);
+            StringBuilder metricName = new StringBuilder(sanitizeString(name));
             if (!prefix.isEmpty()) {
-                metricName = new StringBuilder().append(prefix)
-                    .append(metricName)
-                    .append(".")
-                    .append(valueName)
-                    .toString();
+                metricName.insert(0, prefix);
             }
-            PyTuple tuple = new PyTuple(new PyString(metricName), 
+            metricName.append(".").append(valueName);
+
+            PyTuple tuple = new PyTuple(new PyString(metricName.toString()),
                 new PyTuple(new PyLong(timestamp), new PyString(value)));
             metrics.add(tuple);
             if(metrics.size() >= batchSize) {

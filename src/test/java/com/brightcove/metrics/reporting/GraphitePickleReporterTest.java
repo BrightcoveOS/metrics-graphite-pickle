@@ -43,6 +43,10 @@ public class GraphitePickleReporterTest extends AbstractPollingReporterTest {
         
     private CompiledScript unpickleScript;
 
+    public String getPrefix() {
+        return "prefix";
+    }
+
     @Before
     public void before() throws Exception {
         ScriptEngine engine = new ScriptEngineManager().getEngineByName("python");            
@@ -60,7 +64,7 @@ public class GraphitePickleReporterTest extends AbstractPollingReporterTest {
 
         // use a small batch size so the boundary cases are tested
         final GraphitePickleReporter reporter = new GraphitePickleReporter(registry,
-                                                               "prefix",
+                                                               getPrefix(),
                                                                MetricPredicate.ALL,
                                                                provider,
                                                                clock,
@@ -71,61 +75,61 @@ public class GraphitePickleReporterTest extends AbstractPollingReporterTest {
 
     @Override
     public String[] expectedGaugeResult(String value) {
-        return new String[]{String.format("prefix.java.lang.Object.metric.value %s 5", value)};
+        return new String[]{String.format(withPrefix("java.lang.Object.metric.value %s 5"), value)};
     }
 
     @Override
     public String[] expectedTimerResult() {
         return new String[]{
-                "prefix.java.lang.Object.metric.count 1 5",
-                "prefix.java.lang.Object.metric.meanRate 2.00 5",
-                "prefix.java.lang.Object.metric.1MinuteRate 1.00 5",
-                "prefix.java.lang.Object.metric.5MinuteRate 5.00 5",
-                "prefix.java.lang.Object.metric.15MinuteRate 15.00 5",
-                "prefix.java.lang.Object.metric.min 1.00 5",
-                "prefix.java.lang.Object.metric.max 3.00 5",
-                "prefix.java.lang.Object.metric.mean 2.00 5",
-                "prefix.java.lang.Object.metric.stddev 1.50 5",
-                "prefix.java.lang.Object.metric.median 0.50 5",
-                "prefix.java.lang.Object.metric.75percentile 0.75 5",
-                "prefix.java.lang.Object.metric.95percentile 0.95 5",
-                "prefix.java.lang.Object.metric.98percentile 0.98 5",
-                "prefix.java.lang.Object.metric.99percentile 0.99 5",
-                "prefix.java.lang.Object.metric.999percentile 1.00 5"
+                withPrefix("java.lang.Object.metric.count 1 5"),
+                withPrefix("java.lang.Object.metric.meanRate 2.00 5"),
+                withPrefix("java.lang.Object.metric.1MinuteRate 1.00 5"),
+                withPrefix("java.lang.Object.metric.5MinuteRate 5.00 5"),
+                withPrefix("java.lang.Object.metric.15MinuteRate 15.00 5"),
+                withPrefix("java.lang.Object.metric.min 1.00 5"),
+                withPrefix("java.lang.Object.metric.max 3.00 5"),
+                withPrefix("java.lang.Object.metric.mean 2.00 5"),
+                withPrefix("java.lang.Object.metric.stddev 1.50 5"),
+                withPrefix("java.lang.Object.metric.median 0.50 5"),
+                withPrefix("java.lang.Object.metric.75percentile 0.75 5"),
+                withPrefix("java.lang.Object.metric.95percentile 0.95 5"),
+                withPrefix("java.lang.Object.metric.98percentile 0.98 5"),
+                withPrefix("java.lang.Object.metric.99percentile 0.99 5"),
+                withPrefix("java.lang.Object.metric.999percentile 1.00 5")
         };
     }
 
     @Override
     public String[] expectedMeterResult() {
         return new String[]{
-                "prefix.java.lang.Object.metric.count 1 5",
-                "prefix.java.lang.Object.metric.meanRate 2.00 5",
-                "prefix.java.lang.Object.metric.1MinuteRate 1.00 5",
-                "prefix.java.lang.Object.metric.5MinuteRate 5.00 5",
-                "prefix.java.lang.Object.metric.15MinuteRate 15.00 5",
+                withPrefix("java.lang.Object.metric.count 1 5"),
+                withPrefix("java.lang.Object.metric.meanRate 2.00 5"),
+                withPrefix("java.lang.Object.metric.1MinuteRate 1.00 5"),
+                withPrefix("java.lang.Object.metric.5MinuteRate 5.00 5"),
+                withPrefix("java.lang.Object.metric.15MinuteRate 15.00 5"),
         };
     }
 
     @Override
     public String[] expectedHistogramResult() {
         return new String[]{
-                "prefix.java.lang.Object.metric.min 1.00 5",
-                "prefix.java.lang.Object.metric.max 3.00 5",
-                "prefix.java.lang.Object.metric.mean 2.00 5",
-                "prefix.java.lang.Object.metric.stddev 1.50 5",
-                "prefix.java.lang.Object.metric.median 0.50 5",
-                "prefix.java.lang.Object.metric.75percentile 0.75 5",
-                "prefix.java.lang.Object.metric.95percentile 0.95 5",
-                "prefix.java.lang.Object.metric.98percentile 0.98 5",
-                "prefix.java.lang.Object.metric.99percentile 0.99 5",
-                "prefix.java.lang.Object.metric.999percentile 1.00 5"
+                withPrefix("java.lang.Object.metric.min 1.00 5"),
+                withPrefix("java.lang.Object.metric.max 3.00 5"),
+                withPrefix("java.lang.Object.metric.mean 2.00 5"),
+                withPrefix("java.lang.Object.metric.stddev 1.50 5"),
+                withPrefix("java.lang.Object.metric.median 0.50 5"),
+                withPrefix("java.lang.Object.metric.75percentile 0.75 5"),
+                withPrefix("java.lang.Object.metric.95percentile 0.95 5"),
+                withPrefix("java.lang.Object.metric.98percentile 0.98 5"),
+                withPrefix("java.lang.Object.metric.99percentile 0.99 5"),
+                withPrefix("java.lang.Object.metric.999percentile 1.00 5")
         };
     }
 
     @Override
     public String[] expectedCounterResult(long count) {
         return new String[]{
-                String.format("prefix.java.lang.Object.metric.count %d 5", count)
+                String.format(withPrefix("java.lang.Object.metric.count %d 5"), count)
         };
     }
 
@@ -172,6 +176,15 @@ public class GraphitePickleReporterTest extends AbstractPollingReporterTest {
             }
         } finally {
             reporter.shutdown();
+        }
+    }
+
+    private String withPrefix(String metric) {
+        String prefix = getPrefix();
+        if (prefix == null || prefix.length() == 0) {
+            return metric;
+        } else {
+            return getPrefix() + "." + metric;
         }
     }
 
