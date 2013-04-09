@@ -5,6 +5,7 @@ import com.yammer.metrics.core.Clock;
 import com.yammer.metrics.core.MetricPredicate;
 import com.yammer.metrics.core.MetricsRegistry;
 import com.yammer.metrics.core.VirtualMachineMetrics;
+import com.yammer.metrics.reporting.AbstractPollingReporter;
 import com.yammer.metrics.reporting.GraphiteReporter;
 import com.yammer.metrics.reporting.SocketProvider;
 import org.python.core.PyList;
@@ -24,8 +25,10 @@ import javax.script.SimpleBindings;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.lang.reflect.Field;
 import java.net.Socket;
 import java.util.Locale;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 
@@ -209,6 +212,36 @@ public class GraphitePickleReporter extends GraphiteReporter {
                 getPickler().writeMetrics();
             }
             
+        }
+    }
+
+    /**
+     * Starts the reporter polling at the given period.
+     *
+     * @param period    the amount of time between polls
+     * @param unit      the unit for {@code period}
+     */
+    @Override
+    public void start(long period, TimeUnit unit) {
+        // the parent class uses scheduleWithFixedDelay, but we really want scheduleAtFixedRate
+        // try to get a hold of the executor and fall back to the parent if necessary
+        // remove this when we upgrade to metrics 3.0
+        ScheduledExecutorService executor = null;
+        try {
+            Field field = AbstractPollingReporter.class.getDeclaredField("executor");
+            field.setAccessible(true);
+            Object value = field.get(this);
+            if (value instanceof ScheduledExecutorService) {
+                executor = (ScheduledExecutorService) value;
+            }
+        } catch (Throwable t) {
+            LOG.warn("Unable to use scheduleAtFixedRate", t);
+        }
+        if (executor != null) {
+            LOG.debug("Using scheduleAtFixedRate instead of default");
+            executor.scheduleAtFixedRate(this, period, period, unit);
+        } else {
+            super.start(period, unit);
         }
     }
 
