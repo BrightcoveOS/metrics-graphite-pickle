@@ -5,6 +5,7 @@ import com.yammer.metrics.core.Clock;
 import com.yammer.metrics.core.MetricPredicate;
 import com.yammer.metrics.core.MetricsRegistry;
 import com.yammer.metrics.core.VirtualMachineMetrics;
+import com.yammer.metrics.reporting.AbstractPollingReporter;
 import com.yammer.metrics.reporting.GraphiteReporter;
 import com.yammer.metrics.reporting.SocketProvider;
 import org.python.core.PyList;
@@ -227,7 +228,7 @@ public class GraphitePickleReporter extends GraphiteReporter {
         // remove this when we upgrade to metrics 3.0
         ScheduledExecutorService executor = null;
         try {
-            Field field = this.getClass().getField("executor");
+            Field field = AbstractPollingReporter.class.getDeclaredField("executor");
             field.setAccessible(true);
             Object value = field.get(this);
             if (value instanceof ScheduledExecutorService) {
