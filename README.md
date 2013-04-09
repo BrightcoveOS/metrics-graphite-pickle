@@ -25,6 +25,14 @@ To add `metrics-graphite-pickle` to your project:
 Change Log
 ----------
 
+### 1.1.0
+* Modify the `GraphitePickleReporter` to use `executor.scheduleAtFixedRate` rather than `executor.scheduleWithFixedDelay` (will be unnecessary after upgrading to metrics 3.0.0)
+* Upgrade to metrics-core-2.2.0
+* Upgrade to metrics-graphite-2.2.0
+* Upgrade to jython-standalone-2.5.3
+* Upgrade to slf4j 1.7.2
+
+
 ### 1.0.5
 * Fixed a bug where a null prefix caused the last word in a metric name to be lost in some cases (e.g. 'mean')
 * Upgrade to metrics-graphite-2.1.3
