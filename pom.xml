@@ -5,7 +5,7 @@
     <artifactId>metrics-graphite-pickle</artifactId>
     <packaging>jar</packaging>
     <name>Metrics Graphite Support using Pickle</name>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
     <description>An extension to metrics-graphite that enables pickle publishing.</description>
     <url>http://opensource.brightcove.com/project/metrics-graphite-pickle/</url>
 
@@ -40,6 +40,16 @@
             <email>sam@brightcove.com</email>
             <timezone>-5</timezone>
         </developer>
+        <developer>
+            <name>Aron Atkins</name>
+            <email>aron@gweep.net</email>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
+            <name>Josh Spiewak</name>
+            <email>jspiewak@gmail.com</email>
+            <timezone>-5</timezone>
+        </developer>
     </developers>
  
     <properties>
@@ -65,6 +75,7 @@
             <groupId>org.python</groupId>
             <artifactId>jython-standalone</artifactId>
             <version>2.5.3</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
