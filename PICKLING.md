@@ -68,3 +68,5 @@ payload_length = 81
 header = struct.pack("!L", payload_length)
 # '\x00\x00\x00Q'
 ```
+
+The `Q` character is equivalent to `\x81` (ASCII encoding).
