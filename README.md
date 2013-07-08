@@ -18,12 +18,17 @@ To add `metrics-graphite-pickle` to your project:
 <dependency>
   <groupId>com.brightcove.metrics</groupId>
   <artifactId>metrics-graphite-pickle</artifactId>
-  <version>1.0.4</version>
+  <version>1.2.0</version>
 </dependency>
 ```
 
 Change Log
 ----------
+
+### 1.2.0
+* Stop using jython for metrics pickling. Hand-coded minimal pickling
+  of the primitive data types. Jython unpickling remains in use during
+  tests.
 
 ### 1.1.0
 * Modify the `GraphitePickleReporter` to use `executor.scheduleAtFixedRate` rather than `executor.scheduleWithFixedDelay` (will be unnecessary after upgrading to metrics 3.0.0)
