@@ -339,6 +339,9 @@ public class GraphitePickleReporter extends GraphiteReporter {
             }
         }
 
+        /**
+         * Minimally necessary pickle opcodes.
+         */
         char 
             MARK = '(',
             STOP = '.',
