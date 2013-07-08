@@ -40,6 +40,16 @@
             <email>sam@brightcove.com</email>
             <timezone>-5</timezone>
         </developer>
+        <developer>
+            <name>Aron Atkins</name>
+            <email>aron@gweep.net</email>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
+            <name>Josh Spiewak</name>
+            <email>jspiewak@gmail.com</email>
+            <timezone>-5</timezone>
+        </developer>
     </developers>
  
     <properties>
@@ -65,6 +75,7 @@
             <groupId>org.python</groupId>
             <artifactId>jython-standalone</artifactId>
             <version>2.5.2</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
