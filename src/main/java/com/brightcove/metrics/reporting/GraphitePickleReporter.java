@@ -8,25 +8,19 @@ import com.yammer.metrics.core.VirtualMachineMetrics;
 import com.yammer.metrics.reporting.AbstractPollingReporter;
 import com.yammer.metrics.reporting.GraphiteReporter;
 import com.yammer.metrics.reporting.SocketProvider;
-import org.python.core.PyList;
-import org.python.core.PyLong;
-import org.python.core.PyString;
-import org.python.core.PyTuple;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -211,7 +205,6 @@ public class GraphitePickleReporter extends GraphiteReporter {
                 // finish writing any left over metrics
                 getPickler().writeMetrics();
             }
-            
         }
     }
 
@@ -264,40 +257,19 @@ public class GraphitePickleReporter extends GraphiteReporter {
     @SuppressWarnings("restriction")
     private class MetricPickler {
         
-        /**
-         * See: http://readthedocs.org/docs/graphite/en/1.0/feeding-carbon.html
-         */
-        private static final String PICKLER_SCRIPT = 
-        		"import struct\n" +
-        		"import cPickle\n" +
-        		"payload = cPickle.dumps(metrics)\n" +
-        		"header = struct.pack(\"!L\", len(payload))\n" +
-        		"message = header + payload\n";
-        
         private String prefix;
         private SocketProvider socketProvider;
         private int batchSize;
-        // graphite expects a pickled list of python tuples
-        PyList metrics = new PyList();
 
-        private CompiledScript pickleScript;
+        // graphite expects a python-pickled list of nested tuples.
+        List<MetricTuple> metrics = new LinkedList<MetricTuple>();
 
-        
         MetricPickler(String prefix, SocketProvider socketProvider, int batchSize) {
             this.prefix = prefix;
             this.socketProvider = socketProvider;
             this.batchSize = batchSize;
             
             LOG.debug("Created metric pickler with prefix {} and batchSize {}", prefix, batchSize);
-            
-            ScriptEngine engine = new ScriptEngineManager().getEngineByName("python");            
-            Compilable compilable = (Compilable) engine;
-            try {
-                pickleScript = compilable.compile(PICKLER_SCRIPT);
-            } catch (ScriptException e) {
-                throw new RuntimeException("Unable to compile pickle script", e);
-            }
-
         }
         
         /**
@@ -315,9 +287,8 @@ public class GraphitePickleReporter extends GraphiteReporter {
             }
             metricName.append(".").append(valueName);
 
-            PyTuple tuple = new PyTuple(new PyString(metricName.toString()),
-                new PyTuple(new PyLong(timestamp), new PyString(value)));
-            metrics.add(tuple);
+            metrics.add(new MetricTuple(metricName.toString(), timestamp, value));
+
             if(metrics.size() >= batchSize) {
                 writeMetrics();
             }
@@ -331,18 +302,20 @@ public class GraphitePickleReporter extends GraphiteReporter {
         private void writeMetrics() {
             if (metrics.size() > 0) {
                 try {
-                    Bindings bindings = new SimpleBindings();
-                    bindings.put("metrics", metrics);
-                    pickleScript.eval(bindings);
-                    Object result = bindings.get("message");
-                    String message = result.toString();
+                    String payload = pickleMetrics(metrics);
+
+                    int length = payload.length();
+                    byte[] header = ByteBuffer.allocate(4).putInt(length).array();
 
                     Socket socket = null;
-                    Writer pickleWriter = null;
                     try {
                         socket = socketProvider.get();
-                        pickleWriter = new OutputStreamWriter(socket.getOutputStream(), CHARSET_NAME);
-                        pickleWriter.write(message);
+
+                        OutputStream out = socket.getOutputStream();
+                        out.write(header);
+
+                        Writer pickleWriter = new OutputStreamWriter(out, CHARSET_NAME);
+                        pickleWriter.write(payload);
                         pickleWriter.flush();
                     } finally {
                         if (socket != null) {
@@ -364,6 +337,76 @@ public class GraphitePickleReporter extends GraphiteReporter {
                 
                 metrics.clear();
             }
-        }        
+        }
+
+        char 
+            MARK = '(',
+            STOP = '.',
+            LONG = 'L',
+            STRING = 'S',
+            APPEND = 'a',
+            LIST = 'l',
+            TUPLE = 't';
+
+        /**
+         * See: http://readthedocs.org/docs/graphite/en/1.0/feeding-carbon.html
+         */
+        String pickleMetrics(List<MetricTuple> metrics) {
+            
+            StringBuilder pickled = new StringBuilder();
+            pickled.append(MARK);
+            pickled.append(LIST);
+
+            for (MetricTuple tuple : metrics) {
+                // start the outer tuple
+                pickled.append(MARK);
+
+                // the metric name is a string.
+                pickled.append(STRING);
+                // the single quotes are to match python's repr("abcd")
+                pickled.append('\'');
+                pickled.append(tuple.name);
+                pickled.append('\'');
+                pickled.append('\n');
+
+                // start the inner tuple
+                pickled.append(MARK);
+
+                // timestamp is a long
+                pickled.append(LONG);
+                pickled.append(tuple.timestamp);
+                // the trailing L is to match python's repr(long(1234))
+                pickled.append('L');
+                pickled.append('\n');
+
+                // and the value is a string.
+                pickled.append(STRING);
+                pickled.append('\'');
+                pickled.append(tuple.value);
+                pickled.append('\'');
+                pickled.append('\n');
+
+                pickled.append(TUPLE); // inner close
+                pickled.append(TUPLE); // outer close
+
+                pickled.append(APPEND);
+            }
+
+            // every pickle ends with STOP
+            pickled.append(STOP);
+            return pickled.toString();
+        }
+
+        class MetricTuple {
+            String name;
+            long timestamp;
+            String value;
+            MetricTuple(String name, long timestamp, String value) {
+                this.name = name;
+                this.timestamp = timestamp;
+                this.value = value;
+            }
+        }
+
     }
 }
